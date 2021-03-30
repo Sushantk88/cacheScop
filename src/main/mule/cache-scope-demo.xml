@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="1d9d47fb-6dc7-43bd-b2f3-d87882977451" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<ee:object-store-caching-strategy name="Caching_Strategy" doc:name="Caching Strategy" doc:id="10a84af0-4506-44cd-a44a-43af61f5762a" keyGenerationExpression="#[attributes.queryParams.Id]" />
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="16fbc261-3134-43a7-8361-5bc346cd4010" basePath="/api" >
+		<http:request-connection host="reqres.in" protocol="HTTPS"/>
+	</http:request-config>
+	<flow name="cache-scope-demoFlow" doc:id="7dc2f91a-4582-4b1a-80e4-87fc3f6afdef" >
+		<http:listener doc:name="Listener" doc:id="be9f004b-6bf2-4626-ab9f-5b9a3541fd2b" config-ref="HTTP_Listener_config" path="/cache"/>
+		<set-variable value="#[attributes.queryParams.Id]" doc:name="Set Variable" doc:id="ce3bf999-e05f-481f-bc29-8f428d8ae2b9" variableName="Id"/>
+		<ee:cache doc:name="Cache" doc:id="40835389-8434-4d3c-ba22-b5fcf7f2070e" cachingStrategy-ref="Caching_Strategy">
+			<http:request method="GET" doc:name="Request" doc:id="2c6660f7-935b-42d6-b505-f8668ac10703" config-ref="HTTP_Request_configuration" path="/users">
+				<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"id" : attributes.queryParams.Id
+}]]]></http:query-params>
+			</http:request>
+			<logger level="INFO" doc:name="Logger" doc:id="714cc153-c0d9-4378-91b9-3b69132c214d" message="****Inside Cache*****" />
+		</ee:cache>
+		<logger level="INFO" doc:name="Logger" doc:id="2b3a4825-960f-4b22-b88e-ff5369181b14" message="#[payload]"/>
+	</flow>
+</mule>
